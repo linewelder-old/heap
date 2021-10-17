@@ -73,7 +73,9 @@ void chunks_allocate(void* start, size_t size)
 
 void chunks_remove(HeapChunkList list, size_t index)
 {
-    printf("remove %u\n", index);
+    list.count--;
+    for (int i = index; i < list.count; i++)
+        list.chunks[i] = list.chunks[i + 1];
 }
 
 void* heap_alloc(size_t size)
@@ -117,8 +119,7 @@ void heap_free(void* ptr)
 
 int main(void)
 {
-    int* num  = (int*)heap_alloc(4);
-    int* num2 = (int*)heap_alloc(4);
+    int* num  = (int*)heap_alloc(64000);
 
     printf("Allocated chunks:\n");
     print_chunk_list(allocated_chunks_list);
