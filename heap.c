@@ -61,7 +61,28 @@ void chunks_allocate(void* start, size_t size)
 
 void chunks_free(HeapChunk chunk)
 {
+    int index = 0;
+    while (index < freed_chunks_list.count
+        && freed_chunks[index].start < start)
+    {
+        index++;
+    }
+
     UNIMPLEMENTED;
+
+    if (chunk.start + chunk.size >= freed_chunks[index].start)
+    {
+        // Merge the chunk with the freed_chunks[index]
+        // If touches the previous chunk, merge the two
+    }
+    else if (freed_chunks[index - 1].start + freed_chunks[index - 1].size >= chunk.start)
+    {
+        // Merge the chunk with freed_chunks[indes]
+    }
+    else
+    {
+        // Insert the chunk at (index - 1)
+    }
 }
 
 void chunks_remove(HeapChunkList* list, size_t index)
