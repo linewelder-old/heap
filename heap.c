@@ -59,6 +59,11 @@ void chunks_allocate(void* start, size_t size)
     allocated_chunks_list.count++;
 }
 
+void chunks_free(HeapChunk chunk)
+{
+    UNIMPLEMENTED;
+}
+
 void chunks_remove(HeapChunkList* list, size_t index)
 {
     list->count--;
@@ -96,7 +101,7 @@ void* heap_alloc(size_t size)
         return pointer;
     }
 
-    fprintf(stderr, "Unable to allocate memory, size = %u", size);
+    fprintf(stderr, "Unable to allocate memory, size = %u\n", size);
     abort();
 }
 
@@ -116,7 +121,16 @@ void heap_free(void* ptr)
         sizeof(allocated_chunks[0]), chunk_compare 
     );
 
-    printf("Found: { .start = %p, .size = %u }\n", chunk->start, chunk->size);
+    if (!chunk)
+    {
+        fprintf(stderr, "Invalid pointer, unable to free memory\n");
+        abort();
+    }
+
+    size_t index = (chunk - allocated_chunks) / sizeof(allocated_chunks[0]);
+
+    chunks_remove(&allocated_chunks_list, index);
+    chunks_free(*chunk);
 }
 
 void print_chunk_list(HeapChunkList list)
@@ -145,7 +159,7 @@ int main(void)
     void* b = heap_alloc(4);
     debug();
 
-    // heap_free(a);
+    heap_free(a);
     heap_free(b);
     debug();
 
