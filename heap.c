@@ -36,8 +36,19 @@ void print_chunk_array(const HeapChunk* array, size_t size)
 
 void* heap_alloc(size_t size)
 {
-    UNIMPLEMENTED;
-    return 0;
+    assert(size > 0);
+
+    for (int i = 0; i < freed_chunks_count; i++)
+    {
+        if (freed_chunks[i].size >= size)
+        {
+            // Cut the free chunk
+            // Return the allocated part
+        }
+    }
+
+    fprintf(stderr, "Unable to allocate memory, size = %u", size);
+    abort();
 }
 
 void heap_free(void* ptr)
