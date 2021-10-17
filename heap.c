@@ -15,7 +15,24 @@ typedef struct
 } HeapChunk;
 
 char heap[HEAP_CAPACITY];
-HeapChunk allocated[HEAP_CHUNK_CAPACITY];
+
+HeapChunk allocated_chunks[HEAP_CHUNK_CAPACITY];
+size_t allocated_chunks_count = 0;
+
+HeapChunk freed_chunks[HEAP_CHUNK_CAPACITY + 1] = { { .start = heap, .size = HEAP_CAPACITY } };
+size_t freed_chunks_count = 0;
+
+void print_chunk_array(const HeapChunk* array, size_t size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        printf(
+            "{ .start = %p, .size = %u }\n",
+            array[i].start,
+            array[i].size
+        );
+    }
+}
 
 void* heap_alloc(size_t size)
 {
@@ -31,5 +48,7 @@ void heap_free(void* ptr)
 int main(void)
 {
     int* num = (int*)heap_alloc(4);
+    print_chunk_array(allocated_chunks, allocated_chunks_count);
+    
     return 0;
 }
