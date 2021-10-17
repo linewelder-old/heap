@@ -39,7 +39,7 @@ HeapChunkList freed_chunks_list = {
     .capacity = HEAP_CHUNK_CAPACITY + 1
 };
 
-void chunks_insert(HeapChunkList* list, size_t index)
+static void chunks_insert(HeapChunkList* list, size_t index)
 {
     assert(list->count < list->capacity);
 
@@ -49,14 +49,14 @@ void chunks_insert(HeapChunkList* list, size_t index)
     list->count++;
 }
 
-void chunks_remove(HeapChunkList* list, size_t index)
+static void chunks_remove(HeapChunkList* list, size_t index)
 {
     list->count--;
     for (int i = index; i < list->count; i++)
         list->chunks[i] = list->chunks[i + 1];
 }
 
-void chunks_allocate(void* start, size_t size)
+static void chunks_allocate(void* start, size_t size)
 {
     int index = 0;
     while (index < allocated_chunks_list.count
@@ -71,7 +71,7 @@ void chunks_allocate(void* start, size_t size)
     allocated_chunks[index].size  = size;
 }
 
-void chunks_free(HeapChunk chunk)
+static void chunks_free(HeapChunk chunk)
 {
     heap_allocated -= chunk.size;
 
@@ -142,7 +142,7 @@ void* heap_alloc(size_t size)
     abort();
 }
 
-int chunk_compare(const void* a, const void* b)
+static int chunk_compare(const void* a, const void* b)
 {
     const HeapChunk* a_chunk = a;
     const HeapChunk* b_chunk = b;
@@ -170,36 +170,3 @@ void heap_free(void* ptr)
     chunks_remove(&allocated_chunks_list, index);
 }
 
-void print_chunk_list(HeapChunkList list)
-{
-    for (int i = 0; i < list.count; i++)
-    {
-        printf(
-            "{ .start = %p, .size = %u }\n",
-            list.chunks[i].start,
-            list.chunks[i].size
-        );
-    }
-}
-
-void debug(void)
-{
-    printf("Allocated chunks:\n");
-    print_chunk_list(allocated_chunks_list);
-    printf("Freed chunks:\n");
-    print_chunk_list(freed_chunks_list);
-}
-
-int main(void)
-{
-    void* a = heap_alloc(4);
-    void* b = heap_alloc(4);
-    void* c = heap_alloc(4);
-
-    heap_free(a);
-    heap_free(b);
-    heap_free(c);
-    debug();
-
-    return 0;
-}
