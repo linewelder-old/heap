@@ -164,9 +164,7 @@ void heap_free(void* ptr)
         abort();
     }
 
-    size_t index = (chunk - allocated_chunks) / sizeof(allocated_chunks[0]);
-
-    printf("%u\n", index);
+    size_t index = ((void*)chunk - (void*)allocated_chunks) / sizeof(allocated_chunks[0]);
 
     chunks_free(*chunk);
     chunks_remove(&allocated_chunks_list, index);
@@ -196,12 +194,11 @@ int main(void)
 {
     void* a = heap_alloc(4);
     void* b = heap_alloc(4);
+    void* c = heap_alloc(4);
+
     heap_free(a);
-
-    void* c = heap_alloc(2);
-
-    debug();
     heap_free(b);
+    heap_free(c);
     debug();
 
     return 0;
