@@ -39,50 +39,14 @@ HeapChunkList freed_chunks_list = {
     .capacity = HEAP_CHUNK_CAPACITY + 1
 };
 
-void chunks_allocate(void* start, size_t size)
+void chunks_insert(HeapChunkList* list, size_t index)
 {
-    assert(allocated_chunks_list.count < allocated_chunks_list.capacity);
+    assert(list->count < list->capacity);
 
-    int index = 0;
-    while (index < allocated_chunks_list.count
-        && allocated_chunks[index].start < start)
-    {
-        index++;
-    }
+    for (int i = list->count; i > index; i--)
+        list->chunks[i] = list->chunks[i - 1];
 
-    for (int j = allocated_chunks_list.count; j > index; j--)
-        allocated_chunks[j] = allocated_chunks[j - 1];
-
-    allocated_chunks[index].start = start;
-    allocated_chunks[index].size  = size;
-    
-    allocated_chunks_list.count++;
-}
-
-void chunks_free(HeapChunk chunk)
-{
-    int index = 0;
-    while (index < freed_chunks_list.count
-        && freed_chunks[index].start < start)
-    {
-        index++;
-    }
-
-    UNIMPLEMENTED;
-
-    if (chunk.start + chunk.size >= freed_chunks[index].start)
-    {
-        // Merge the chunk with the freed_chunks[index]
-        // If touches the previous chunk, merge the two
-    }
-    else if (freed_chunks[index - 1].start + freed_chunks[index - 1].size >= chunk.start)
-    {
-        // Merge the chunk with freed_chunks[indes]
-    }
-    else
-    {
-        // Insert the chunk at (index - 1)
-    }
+    list->count++;
 }
 
 void chunks_remove(HeapChunkList* list, size_t index)
@@ -90,6 +54,58 @@ void chunks_remove(HeapChunkList* list, size_t index)
     list->count--;
     for (int i = index; i < list->count; i++)
         list->chunks[i] = list->chunks[i + 1];
+}
+
+void chunks_allocate(void* start, size_t size)
+{
+    int index = 0;
+    while (index < allocated_chunks_list.count
+        && allocated_chunks[index].start < start)
+    {
+        index++;
+    }
+
+    chunks_insert(&allocated_chunks_list, index);
+
+    allocated_chunks[index].start = start;
+    allocated_chunks[index].size  = size;
+}
+
+void chunks_free(HeapChunk chunk)
+{
+    heap_allocated -= chunk.size;
+
+    int index = 0;
+    while (index < freed_chunks_list.count
+        && freed_chunks[index].start < chunk.start)
+    {
+        index++;
+    }
+
+    int merge_with_next = index != freed_chunks_list.count
+                       && chunk.start + chunk.size >= freed_chunks[index].start;
+    int merge_with_last = index != 0
+                       && freed_chunks[index - 1].start + freed_chunks[index - 1].size >= chunk.start; 
+
+    if (merge_with_next && merge_with_last)
+    {
+        freed_chunks[index - 1].size += chunk.size + freed_chunks[index].size;
+        chunks_remove(&freed_chunks_list, index);
+    }
+    else if (merge_with_next)
+    {
+        freed_chunks[index].start =  chunk.start;
+        freed_chunks[index].size  += chunk.size;   
+    }
+    else if (merge_with_last)
+    {
+        freed_chunks[index - 1].size += chunk.size;
+    }
+    else
+    {
+        chunks_insert(&freed_chunks_list, index);
+        freed_chunks[index] = chunk;
+    }
 }
 
 void* heap_alloc(size_t size)
@@ -150,8 +166,10 @@ void heap_free(void* ptr)
 
     size_t index = (chunk - allocated_chunks) / sizeof(allocated_chunks[0]);
 
-    chunks_remove(&allocated_chunks_list, index);
+    printf("%u\n", index);
+
     chunks_free(*chunk);
+    chunks_remove(&allocated_chunks_list, index);
 }
 
 void print_chunk_list(HeapChunkList list)
@@ -178,9 +196,11 @@ int main(void)
 {
     void* a = heap_alloc(4);
     void* b = heap_alloc(4);
-    debug();
-
     heap_free(a);
+
+    void* c = heap_alloc(2);
+
+    debug();
     heap_free(b);
     debug();
 
