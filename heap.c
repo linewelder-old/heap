@@ -39,18 +39,6 @@ HeapChunkList freed_chunks_list = {
     .capacity = HEAP_CHUNK_CAPACITY + 1
 };
 
-void print_chunk_list(HeapChunkList list)
-{
-    for (int i = 0; i < list.count; i++)
-    {
-        printf(
-            "{ .start = %p, .size = %u }\n",
-            list.chunks[i].start,
-            list.chunks[i].size
-        );
-    }
-}
-
 void chunks_allocate(void* start, size_t size)
 {
     assert(allocated_chunks_list.count < allocated_chunks_list.capacity);
@@ -71,11 +59,11 @@ void chunks_allocate(void* start, size_t size)
     allocated_chunks_list.count++;
 }
 
-void chunks_remove(HeapChunkList list, size_t index)
+void chunks_remove(HeapChunkList* list, size_t index)
 {
-    list.count--;
-    for (int i = index; i < list.count; i++)
-        list.chunks[i] = list.chunks[i + 1];
+    list->count--;
+    for (int i = index; i < list->count; i++)
+        list->chunks[i] = list->chunks[i + 1];
 }
 
 void* heap_alloc(size_t size)
@@ -102,7 +90,7 @@ void* heap_alloc(size_t size)
         }
         else if (chunk->size == size)
         {
-            chunks_remove(freed_chunks_list, i);
+            chunks_remove(&freed_chunks_list, i);
         }
 
         return pointer;
@@ -112,19 +100,54 @@ void* heap_alloc(size_t size)
     abort();
 }
 
-void heap_free(void* ptr)
+int chunk_compare(const void* a, const void* b)
 {
-    UNIMPLEMENTED;
+    const HeapChunk* a_chunk = a;
+    const HeapChunk* b_chunk = b;
+
+    return a_chunk->start - b_chunk->start;
 }
 
-int main(void)
+void heap_free(void* ptr)
 {
-    int* num  = (int*)heap_alloc(64000);
+    HeapChunk search_key = { .start = ptr };
+    HeapChunk* chunk = (HeapChunk*)bsearch(
+        &search_key, allocated_chunks, allocated_chunks_list.count, 
+        sizeof(allocated_chunks[0]), chunk_compare 
+    );
 
+    printf("Found: { .start = %p, .size = %u }\n", chunk->start, chunk->size);
+}
+
+void print_chunk_list(HeapChunkList list)
+{
+    for (int i = 0; i < list.count; i++)
+    {
+        printf(
+            "{ .start = %p, .size = %u }\n",
+            list.chunks[i].start,
+            list.chunks[i].size
+        );
+    }
+}
+
+void debug(void)
+{
     printf("Allocated chunks:\n");
     print_chunk_list(allocated_chunks_list);
     printf("Freed chunks:\n");
     print_chunk_list(freed_chunks_list);
+}
+
+int main(void)
+{
+    void* a = heap_alloc(4);
+    void* b = heap_alloc(4);
+    debug();
+
+    // heap_free(a);
+    heap_free(b);
+    debug();
 
     return 0;
 }
