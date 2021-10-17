@@ -50,17 +50,41 @@ void print_chunk_list(HeapChunkList list)
     }
 }
 
+void chunks_allocate(void* start, size_t size)
+{
+    printf("allocate { .start = %p, .size = %u }\n", start, size);
+}
+
+void chunks_remove(HeapChunkList list, size_t index)
+{
+    printf("remove %u\n", index);
+}
+
 void* heap_alloc(size_t size)
 {
     assert(size > 0);
 
     for (int i = 0; i < freed_chunks_list.count; i++)
     {
-        if (freed_chunks[i].size >= size)
+        HeapChunk* chunk = &freed_chunks[i];
+        void* pointer = chunk->start;
+        
+        if (chunk->size < size)
+            continue;
+
+        chunks_allocate(chunk->start, size);
+
+        if (chunk->size > size)
         {
-            // Cut the free chunk
-            // Return the allocated part
+            chunk->start += size;
+            chunk->size -= size;
         }
+        else if (chunk->size == size)
+        {
+            chunks_remove(freed_chunks_list, i);
+        }
+
+        return pointer;
     }
 
     fprintf(stderr, "Unable to allocate memory, size = %u", size);
@@ -75,7 +99,10 @@ void heap_free(void* ptr)
 int main(void)
 {
     int* num = (int*)heap_alloc(4);
+
+    printf("Allocated chunks:\n");
     print_chunk_list(allocated_chunks_list);
+    printf("Freed chunks:\n");
     print_chunk_list(freed_chunks_list);
 
     return 0;
