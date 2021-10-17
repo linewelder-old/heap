@@ -23,6 +23,7 @@ typedef struct
 } HeapChunkList;
 
 char heap[HEAP_CAPACITY];
+size_t heap_allocated = 0;
 
 HeapChunk allocated_chunks[HEAP_CHUNK_CAPACITY];
 HeapChunkList allocated_chunks_list = {
@@ -63,6 +64,9 @@ void chunks_remove(HeapChunkList list, size_t index)
 void* heap_alloc(size_t size)
 {
     assert(size > 0);
+    assert(heap_allocated + size <= HEAP_CAPACITY);
+
+    heap_allocated += size;
 
     for (int i = 0; i < freed_chunks_list.count; i++)
     {
